@@ -252,22 +252,22 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
-	{ MODKEY,               XK_c,           clipcopy,       {.i =  0} },
+	/* { MODKEY,               XK_c,           clipcopy,       {.i =  0} }, */
 	{ ShiftMask,            XK_Insert,      clippaste,      {.i =  0} },
-	{ MODKEY,               XK_v,           clippaste,      {.i =  0} },
-	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
+	/* { MODKEY,               XK_v,           clippaste,      {.i =  0} }, */
+	/* { ShiftMask,            XK_Insert,      selpaste,       {.i =  0} }, */
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-	{ MODKEY,		XK_s,		changealpha,	{.f = -0.05} },
-	{ MODKEY,		XK_a,		changealpha,	{.f = +0.05} },
-	{ TERMMOD,              XK_Up,          zoom,           {.f = +1} },
-	{ TERMMOD,              XK_Down,        zoom,           {.f = -1} },
-	{ TERMMOD,              XK_K,           zoom,           {.f = +1} },
-	{ TERMMOD,              XK_J,           zoom,           {.f = -1} },
-	{ TERMMOD,              XK_U,           zoom,           {.f = +2} },
-	{ TERMMOD,              XK_D,           zoom,           {.f = -2} },
-	{ MODKEY,               XK_l,           externalpipe,   {.v = openurlcmd } },
-	{ MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd } },
-	{ MODKEY,               XK_o,           externalpipe,   {.v = copyoutput } },
+	/* { MODKEY,		XK_s,		changealpha,	{.f = -0.05} }, */
+	/* { MODKEY,		XK_a,		changealpha,	{.f = +0.05} }, */
+	/* { TERMMOD,              XK_Up,          zoom,           {.f = +1} }, */
+	/* { TERMMOD,              XK_Down,        zoom,           {.f = -1} }, */
+	/* { TERMMOD,              XK_K,           zoom,           {.f = +1} }, */
+	/* { TERMMOD,              XK_J,           zoom,           {.f = -1} }, */
+	/* { TERMMOD,              XK_U,           zoom,           {.f = +2} }, */
+	/* { TERMMOD,              XK_D,           zoom,           {.f = -2} }, */
+	/* { MODKEY,               XK_l,           externalpipe,   {.v = openurlcmd } }, */
+	/* { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd } }, */
+	/* { MODKEY,               XK_o,           externalpipe,   {.v = copyoutput } }, */
 };
 
 /*
