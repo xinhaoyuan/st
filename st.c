@@ -1881,12 +1881,27 @@ strhandle(void)
 			}
 			return;
 		case 4: /* color set */
-			if (narg < 3)
+		case 10: /* set foreground */
+		case 11: /* set background */
+		case 12: /* set cursor */
+			if ((par == 4 && narg < 3) || narg < 2)
 				break;
-			p = strescseq.args[2];
+			p = strescseq.args[par == 4 ? 2 : 1];
 			/* FALLTHROUGH */
 		case 104: /* color reset, here p = NULL */
 			j = (narg > 1) ? atoi(strescseq.args[1]) : -1;
+		case 110: /* reset background */
+		case 111: /* reset foreground */
+		case 112: /* reset cursor */
+			if (par == 10 || par == 110)
+				j = defaultfg;
+			else if (par == 11 || par == 111)
+				j = defaultbg;
+			else if (par == 12 || par == 112)
+				j = defaultcs;
+			else
+				j = (narg > 1) ? atoi(strescseq.args[1]) : -1;
+
 			if (xsetcolorname(j, p)) {
 				if (par == 104 && narg <= 1)
 					return; /* color reset without parameter */
