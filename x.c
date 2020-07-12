@@ -66,6 +66,7 @@ typedef struct {
 #define XK_SWITCH_MOD (1<<13)
 
 /* function definitions used in config.h */
+static void altbg(const Arg *);
 static void clipcopy(const Arg *);
 static void clippaste(const Arg *);
 static void numlock(const Arg *);
@@ -101,6 +102,7 @@ typedef struct {
 	int cw; /* char width  */
 	int mode; /* window state/mode flags */
 	int cursor; /* cursor style */
+	int altbg; /* alternative background color */
 } TermWindow;
 
 typedef struct {
@@ -273,6 +275,13 @@ static char *opt_name  = NULL;
 static char *opt_title = NULL;
 
 static int oldbutton = 3; /* button event on startup: 3 = release */
+
+void altbg(const Arg *arg)
+{
+	if (arg->i != 0) win.altbg = arg->i == 1;
+	else win.altbg = !win.altbg;
+	redraw();
+}
 
 void
 clipcopy(const Arg *dummy)
@@ -1346,6 +1355,7 @@ xinit(int cols, int rows)
 	}
 
 	XRecolorCursor(xw.dpy, cursor, &xmousefg, &xmousebg);
+	win.altbg = 1; /* TODO make this configurable. */
 
 	xw.xembed = XInternAtom(xw.dpy, "_XEMBED", False);
 	xw.wmdeletewin = XInternAtom(xw.dpy, "WM_DELETE_WINDOW", False);
@@ -1523,6 +1533,7 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
 	Color *fg, *bg, *temp, revfg, revbg, truefg, truebg;
 	XRenderColor colfg, colbg;
 	XRectangle r;
+	Color altbg;
 
 	/* Fallback on color display for attributes not supported by the font */
 	if (base.mode & ATTR_ITALIC && base.mode & ATTR_BOLD) {
@@ -1620,6 +1631,17 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
 		xclear(winx, 0, winx + width, borderpx);
 	if (winy + win.ch >= borderpx + win.th)
 		xclear(winx, winy + win.ch, winx + width, win.h);
+
+        if (win.altbg && y % 2) {
+            colbg.alpha = 0xffff;
+#define ALT(x) ((x) > 0x8000 ? (x) - 0x0400 : (x) + 0x0400)
+            colbg.red = ALT(bg->color.red);
+            colbg.green = ALT(bg->color.green);
+            colbg.blue = ALT(bg->color.blue);
+#undef ALT
+            XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &colbg, &altbg);
+            bg = &altbg;
+        }
 
 	/* Clean up the region we want to draw to. */
 	XftDrawRect(xw.draw, bg, winx, winy, width, win.ch);
