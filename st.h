@@ -36,6 +36,8 @@ enum glyph_attribute {
 	ATTR_WDUMMY     = 1 << 10,
 	ATTR_BOXDRAW    = 1 << 11,
 	ATTR_LIGA       = 1 << 12,
+	ATTR_SIXEL	= 1 << 13,
+	ATTR_SIXEL_MASK	= 1 << 14,
 	ATTR_BOLD_FAINT = ATTR_BOLD | ATTR_FAINT,
 };
 
@@ -79,6 +81,40 @@ typedef union {
 	const void *v;
 	const char *s;
 } Arg;
+
+typedef struct {
+	uint b;
+	uint mask;
+	void (*func)(const Arg *);
+	const Arg arg;
+} MouseKey;
+
+typedef struct _ImageList {
+	struct _ImageList *next, *prev;
+	unsigned char *pixels;
+	void *pixmap;
+	int width;
+	int height;
+	int x;
+	int y;
+	int should_delete;
+} ImageList;
+
+
+/* Purely graphic info */
+typedef struct {
+	int tw, th; /* tty width and height */
+	int w, h; /* window width and height */
+        int hborderpx, vborderpx;
+	int ch; /* char height */
+	int cw; /* char width  */
+	int cyo; /* char y offset */
+	int mode; /* window state/mode flags */
+	int cursor; /* cursor style */
+	int altbg; /* alternative background color */
+} TermWindow;
+
+extern TermWindow win;
 
 void die(const char *, ...);
 void redraw(void);

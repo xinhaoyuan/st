@@ -21,13 +21,17 @@ enum win_mode {
 	MODE_NUMLOCK     = 1 << 17,
 	MODE_MOUSE       = MODE_MOUSEBTN|MODE_MOUSEMOTION|MODE_MOUSEX10\
 	                  |MODE_MOUSEMANY,
+	MODE_SIXEL       = 1 << 18,
 };
 
 void xbell(void);
 void xclipcopy(void);
 void xdrawcursor(int, int, Glyph, int, int, Glyph, Line, int);
 void xdrawline(Line, int, int, int);
+void xfreeimage(ImageList *);
+void xdrawimages(ImageList *, int, int, Line *);
 void xfinishdraw(void);
+uint32_t getcolrgb(int);
 void xloadcols(void);
 int xsetcolorname(int, const char *);
 void xseticontitle(char *);

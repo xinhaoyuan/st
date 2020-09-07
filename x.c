@@ -94,17 +94,6 @@ typedef XftDraw *Draw;
 typedef XftColor Color;
 typedef XftGlyphFontSpec GlyphFontSpec;
 
-/* Purely graphic info */
-typedef struct {
-	int tw, th; /* tty width and height */
-	int w, h; /* window width and height */
-	int ch; /* char height */
-	int cw; /* char width  */
-	int mode; /* window state/mode flags */
-	int cursor; /* cursor style */
-	int altbg; /* alternative background color */
-} TermWindow;
-
 typedef struct {
 	Display *dpy;
 	Colormap cmap;
@@ -240,7 +229,7 @@ static void (*handler[LASTEvent])(XEvent *) = {
 static DC dc;
 static XWindow xw;
 static XSelection xsel;
-static TermWindow win;
+TermWindow win;
 
 /* Font Ring Cache */
 enum {
@@ -784,6 +773,11 @@ xresize(int col, int row)
 
 	/* resize to new width */
 	xw.specbuf = xrealloc(xw.specbuf, col * sizeof(GlyphFontSpec));
+}
+
+uint32_t
+getcolrgb(int i) {
+	return dc.col[i].pixel & 0x00FFFFFF;
 }
 
 ushort
@@ -1844,6 +1838,92 @@ xdrawline(Line line, int x1, int y1, int x2)
 	}
 	if (i > 0)
 		xdrawglyphfontspecs(specs, base, i, ox, y1);
+}
+
+void xfreeimage(ImageList *im) {
+	if (im->pixmap) {
+		XFreePixmap(xw.dpy, (Drawable)im->pixmap);
+	}
+}
+
+void xdrawimages(ImageList *head, int term_rows, int term_cols, Line *lines) {
+	int x, y;
+	int n = 0;
+	int nlimit = 256;
+	XRectangle *rects = NULL;
+	XGCValues gcvalues;
+	GC gc;
+	ImageList *im;
+
+	for (im = head; im; im = im->next) {
+		if (im->should_delete) {
+			continue;
+		}
+		if (!im->pixmap) {
+			im->pixmap = (void *)XCreatePixmap(xw.dpy, xw.win, im->width, im->height, xw.depth);
+			XImage ximage = {
+				.format = ZPixmap,
+				.data = (char *)im->pixels,
+				.width = im->width,
+				.height = im->height,
+				.xoffset = 0,
+				.byte_order = LSBFirst,
+				.bitmap_bit_order = MSBFirst,
+				.bits_per_pixel = 32,
+				.bytes_per_line = im->width * 4,
+				.bitmap_unit = 32,
+				.bitmap_pad = 32,
+				.depth = xw.depth
+			};
+			XPutImage(xw.dpy, (Drawable)im->pixmap, dc.gc, &ximage, 0, 0, 0, 0, im->width, im->height);
+			free(im->pixels);
+			im->pixels = NULL;
+		}
+		n = 0;
+		memset(&gcvalues, 0, sizeof(gcvalues));
+		gc = XCreateGC(xw.dpy, xw.win, 0, &gcvalues);
+		for (y = MAX(im->y, 0); y < MIN(term_rows, im->y + (im->height+win.ch-1)/win.ch); y++) {
+			for (x = MAX(im->x, 0); x < MIN(term_cols, im->x + (im->width+win.cw-1)/win.cw); x++) {
+				if (!rects)
+					rects = xmalloc(sizeof(XRectangle) * nlimit);
+				if ((lines[y][x].mode & (ATTR_SIXEL | ATTR_SIXEL_MASK)) == ATTR_SIXEL) {
+					lines[y][x].mode |= ATTR_SIXEL_MASK;
+					if (n > 0 && rects[n-1].x+rects[n-1].width == win.hborderpx+x*win.cw && rects[n-1].y == win.vborderpx+y*win.ch) {
+						rects[n-1].width += win.cw;
+					} else {
+						rects[n].x = win.hborderpx+x*win.cw;
+						rects[n].y = win.vborderpx+y*win.ch;
+						rects[n].width = win.cw;
+						rects[n].height = win.ch;
+						if (++n == nlimit && (rects = realloc(rects, sizeof(XRectangle) * (nlimit *= 2))) == NULL)
+							die("Out of memory\n");
+					}
+				}
+			}
+			if (n > 1 && rects[n-2].x == rects[n-1].x && rects[n-2].width == rects[n-1].width) {
+				if (rects[n-2].y+rects[n-2].height == rects[n-1].y) {
+					rects[n-2].height += win.ch;
+					n--;
+				}
+			}
+		}
+		if (n == 0) {
+		    im->should_delete = 1;
+			continue;
+		}
+		if (n > 1)
+			XSetClipRectangles(xw.dpy, gc, 0, 0, rects, n, YXSorted);
+		XCopyArea(xw.dpy, (Drawable)im->pixmap, xw.buf, gc, 0, 0, im->width, im->height, win.hborderpx + im->x * win.cw, win.vborderpx + im->y * win.ch);
+		XFreeGC(xw.dpy, gc);
+	}
+	free(rects);
+
+	for (im = head; im; im = im->next) {
+		if (im->should_delete) continue;
+		for (y = MAX(im->y, 0); y < MIN(term_rows, im->y + (im->height+win.ch-1)/win.ch); y++)
+			for (x = MAX(im->x, 0); x < MIN(term_cols, im->x + (im->width+win.cw-1)/win.cw); x++)
+				lines[y][x].mode ^= (lines[y][x].mode & ATTR_SIXEL_MASK);
+	}
 }
 
 void
