@@ -847,6 +847,21 @@ xsetcolorname(int x, const char *name)
 	if (!BETWEEN(x, 0, dc.collen))
 		return 1;
 
+	if (name && name[0] == '?' && name[1] == '\0') {
+		char output[30];
+		int size = snprintf(output, sizeof(output),
+			x == defaultfg ? "\033]10;" :
+			(x == defaultbg ? "\033]11;" : "\033]4;%d;"),
+			x);
+		size += snprintf(output + size, sizeof(output) - size,
+			"rgb:%04x/%04x/%04x\033\\",
+			dc.col[x].color.red,
+			dc.col[x].color.green,
+			dc.col[x].color.blue);
+		ttywrite(output, size, 0);
+		return 0;
+        }
+
 	if (!xloadcolor(x, name, &ncolor))
 		return 1;
 
